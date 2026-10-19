@@ -15,6 +15,9 @@
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="document-text" :href="route('requests.index')" :current="request()->routeIs('requests.*')" wire:navigate>
+                        Transport requests
+                    </flux:sidebar.item>
                     @if (auth()->user()->canAccessPanel(\Filament\Facades\Filament::getPanel('admin')))
                         <flux:sidebar.item icon="truck" href="{{ url('/admin') }}">Staff panel</flux:sidebar.item>
                     @endif

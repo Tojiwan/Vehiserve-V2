@@ -70,25 +70,36 @@ is not yet verified. PostgreSQL needs manual startup after reboot (README).
 
 ## Phase 2 — Trip requests and approvals
 
-- [ ] Implement request form: purpose, destination, office, dates/times, passengers.
-- [ ] Validate date ordering, passenger input, and required fields server-side.
-- [ ] Implement requester list/detail screens scoped to ownership.
-- [ ] Implement stable workflow states with readable labels.
-- [ ] Create one shared transactional action for state transitions and audit events.
-- [ ] Implement Motor Pool preliminary availability check.
-- [ ] Implement Dean approval/rejection queue.
-- [ ] Implement VP approval/rejection queue.
-- [ ] Implement President approval/rejection queue.
-- [ ] Implement Motor Pool final approval and ready-to-schedule state.
-- [ ] Implement cancellation rules and required rejection/cancellation reasons.
-- [ ] Display the complete approval timeline.
-- [ ] Prevent editing approved request details and repeated/skipped approvals.
-- [ ] Test the happy path from submission through final approval.
-- [ ] Test ownership violations and every role's forbidden actions.
-- [ ] Test stale/concurrent decisions cannot overwrite newer state.
-- [ ] Test cancellation and rejection at their permitted stages.
+- [x] Implement request form: purpose, destination, office, dates/times, passengers.
+- [x] Validate date ordering, passenger input, and required fields server-side.
+- [x] Implement requester list/detail screens scoped to ownership.
+- [x] Implement stable workflow states with readable labels.
+- [x] Create one shared transactional action for state transitions and audit events.
+- [x] Implement Motor Pool preliminary availability check.
+- [x] Implement Dean approval/rejection queue.
+- [x] Implement VP approval/rejection queue.
+- [x] Implement President approval/rejection queue.
+- [x] Implement Motor Pool final approval and ready-to-schedule state.
+- [x] Implement cancellation rules and required rejection/cancellation reasons.
+- [x] Display the complete approval timeline.
+- [x] Prevent editing approved request details and repeated/skipped approvals.
+- [x] Test the happy path from submission through final approval.
+- [x] Test ownership violations and every role's forbidden actions.
+- [x] Test stale/concurrent decisions cannot overwrite newer state.
+- [x] Test cancellation and rejection at their permitted stages.
 
-Evidence / blockers: Pending.
+Evidence: `composer ci:check` passed (Pint, PHPStan, 112 tests / 675 assertions).
+Production Vite build passed. RequestWorkflowTest covers submission validation,
+ownership, demo isolation, role/stage authorization, cancellation/rejection,
+availability, rollback, immutable history, locked properties, and submission limits.
+TransitionConcurrencyTest starts a second PHP process against PostgreSQL, verifies
+it waits on the request row lock, and confirms its stale approval is rejected.
+Desktop/mobile browser checks passed for submission, all five approval steps,
+the Filament queue, and cancellation, without JS errors or horizontal overflow.
+Two fictional walkthrough requests remain in the development database (ready to
+schedule and cancelled). The actor-name migration was applied locally.
+Date validation checks format and return-after-departure; past departure dates
+are not prohibited. Scheduling and attachments remain Phase 3/4 work.
 
 ## Phase 3 — Fleet and scheduling
 
@@ -280,6 +291,22 @@ Only start these if requested after the core release:
 - Next: Phase 2 request creation, ownership-scoped pages, and transactional approvals.
 - Still external/unverified: GitHub CI run, hosted services, real inbox delivery,
   hosted storage selection, and public DHVSU logo permission.
+
+### October 19, 2026 — Phase 2 requests and approvals verified
+
+- Added Livewire request submission, ownership-scoped lists/details, readable states,
+  a decision timeline, and Filament queues filtered to each approver's current stage.
+- Added shared transactional submission/transition actions, row-lock and stale-state
+  checks, actor-name snapshots, required rejection/cancellation reasons, and booking
+  release when staff cancel an already scheduled trip.
+- Preliminary availability checks capacity, operational status, and overlapping
+  active bookings without reserving resources. Scheduling must recheck in Phase 3.
+- Verified 112 tests / 675 assertions, formatting, static analysis, production assets,
+  and the complete approval chain plus mobile cancellation in a real browser.
+- Confirmed the reported PostgreSQL startup failure was a duplicate startup attempt;
+  the existing server was accepting connections. README now includes a readiness check.
+- Updated guide, checklist, and README. No agent commit made.
+- Next: Phase 3 fleet management, vehicle/driver assignment, scheduling, and completion.
 
 ## Release record
 

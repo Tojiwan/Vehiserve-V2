@@ -7,6 +7,7 @@ use App\Enums\Role;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property RequestState $state
@@ -28,6 +29,18 @@ class TripRequest extends Model
     public function requester(): BelongsTo
     {
         return $this->belongsTo(User::class, 'requester_id');
+    }
+
+    /** @return HasMany<Passenger, $this> */
+    public function passengers(): HasMany
+    {
+        return $this->hasMany(Passenger::class);
+    }
+
+    /** @return HasMany<RequestEvent, $this> */
+    public function events(): HasMany
+    {
+        return $this->hasMany(RequestEvent::class)->orderBy('id');
     }
 
     /** @param Builder<TripRequest> $query */

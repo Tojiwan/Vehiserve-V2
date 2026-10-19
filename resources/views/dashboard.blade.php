@@ -13,12 +13,20 @@
         @endif
 
         <div class="border-t border-zinc-200 pt-6 dark:border-zinc-700">
-            <flux:heading size="lg" level="2">Your workspace is ready</flux:heading>
-            <flux:text class="mt-2">Request submission and approval queues will be added in Phase 2. University trip times will use Asia/Manila.</flux:text>
+            <flux:heading size="lg" level="2">Your transport workspace</flux:heading>
+            <flux:text class="mt-2">Submit a trip, follow its approval history, or review requests waiting for your decision. All trip times are displayed in Asia/Manila.</flux:text>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+            @can('create', \App\Models\TripRequest::class)
+                <flux:button variant="primary" :href="route('requests.create')" wire:navigate>New request</flux:button>
+            @endcan
+            <flux:button :href="route('requests.index')" wire:navigate>View requests</flux:button>
         </div>
 
         @if (auth()->user()->canAccessPanel(\Filament\Facades\Filament::getPanel('admin')))
             <flux:button variant="primary" href="{{ url('/admin') }}">Open staff panel</flux:button>
+            <flux:link :href="\App\Filament\Resources\TripRequests\TripRequestResource::getUrl('index')">Open request queue</flux:link>
         @endif
     </section>
 </x-layouts::app>

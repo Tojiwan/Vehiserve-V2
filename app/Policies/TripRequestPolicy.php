@@ -9,6 +9,11 @@ use App\Models\User;
 
 class TripRequestPolicy
 {
+    public function viewAny(User $user): bool
+    {
+        return $user->hasVerifiedEmail() && $user->role !== Role::User;
+    }
+
     public function view(User $user, TripRequest $tripRequest): bool
     {
         return (! $user->is_demo || $tripRequest->requester->is_demo)

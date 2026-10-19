@@ -5,10 +5,10 @@ accounts and fleet records are fictional. This is not an official university ser
 
 ## Current build
 
-Phase 1 provides shared login, password reset, verified-account access, a requester
-workspace, the Filament staff panel, fixed roles, authorization policies, PostgreSQL
-schema, and fictional seeds. Request forms and approval actions start in Phase 2;
-the staff panel currently contains only its dashboard.
+Phases 1 and 2 provide shared authentication, fixed roles, demo safeguards,
+PostgreSQL schema and fictional seeds, request submission/tracking, staff approval
+queues, and a recorded decision timeline. Scheduling and fleet management are next
+in Phase 3; attachments and notifications follow in Phase 4.
 
 Installed: PHP 8.4, Laravel 13.37.0, Filament 5.10.2, Livewire 4.4.7,
 Fortify 1.41.0, Pest 4.7.8, PostgreSQL 18.6, Node 24.22.0, npm 11.19.1,
@@ -27,6 +27,12 @@ To start PostgreSQL after a reboot, run in PowerShell:
 
 ```powershell
 $pg = "$env:LOCALAPPDATA\Vehiserve"
+& "$pg\postgresql-18.6\pgsql\bin\pg_isready.exe" -h 127.0.0.1 -p 5432
+```
+
+If it reports `accepting connections`, PostgreSQL is already running. Otherwise:
+
+```powershell
 & "$pg\postgresql-18.6\pgsql\bin\pg_ctl.exe" -D "$pg\data" -l "$pg\postgres.log" -o '-h 127.0.0.1 -p 5432' -w start
 ```
 
@@ -113,6 +119,10 @@ accounts and fleet records, preserving existing ones. It is not a demo reset com
 
 ## Checks
 
+The latest local verification passed 112 tests / 675 assertions, formatting,
+static analysis, and the production asset build. A two-process PostgreSQL test
+verifies concurrent approvals wait on a lock and cannot overwrite a newer decision.
+
 ```powershell
 composer ci:check
 npm run build
@@ -131,12 +141,42 @@ and Node from `.nvmrc`. GitHub execution remains to be verified after pushing.
 
 ## Conventions and next steps
 
+### Request workflow
+
+1. Sign in as User and open **Transport requests → New request**. Enter office,
+   destination, purpose, departure/return in Manila time, and one passenger per line.
+2. Sign in as Motor Pool Staff and open **Request queue** in the staff panel.
+   View the request and confirm preliminary availability.
+3. Review in order as Dean, Vice President, SUC President, then Motor Pool Staff
+   for final approval. The request becomes **Ready to schedule**.
+
+The queue defaults to **Awaiting my decision** for approvers. Admin/Super Admin
+can inspect requests but cannot sign for another role. The detail screen is shared
+between the portal and staff queue; every decision is authorized server-side.
+
+Submitted trip details cannot be edited. Requesters may cancel before scheduling;
+Motor Pool Staff may cancel scheduled trips and release their booking. Rejection
+and cancellation require a reason and are terminal. A stale browser tab must reload
+before recording another decision. History retains the actor's name at decision time.
+
+Submissions allow 1–60 passengers (excluding the driver) and at most five requests
+per user per minute. Dates must be valid with return after departure; past departures
+are currently permitted. Preliminary availability checks do not reserve vehicles or
+drivers. Scheduling will perform a fresh transactional check in Phase 3.
+
+Two fictional browser-walkthrough requests are retained locally as examples; they
+are not part of the repeatable seed yet. After pulling these changes elsewhere,
+run `php artisan migrate` to add the history actor-name snapshot column.
+
+### Development conventions
+
 - Store timestamps in UTC, including the PostgreSQL connection timezone. Forms
   and displays must convert through `config('vehiserve.display_timezone')`
   (`Asia/Manila`). Conversion and database date ordering are covered by tests.
 - Apply policies in every action. Ownership query scopes do not replace authorization.
-- Upcoming approval actions must lock/re-read the request and atomically append
-  history. Upcoming scheduling actions must recheck conflicts in a transaction.
+- All approval/rejection/cancellation entry points use `TransitionTripRequest`,
+  which locks/re-reads the request and atomically appends history. Upcoming
+  scheduling actions must recheck conflicts in a transaction.
 - Local uploads stay private; attachments and hosted storage are Phase 4 work.
 - Password-reset mail uses the local log transport. Brevo and actual inbox
   delivery are not configured yet. Keep logs private.

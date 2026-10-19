@@ -1,7 +1,7 @@
 # VEHISERVE v2 — Build Guide
 
 Created: October 19, 2026  
-Status: Phase 1 implemented and locally verified; Phase 2 is next. Hosted storage remains deferred to Phase 4.
+Status: Phase 2 implemented and locally verified; Phase 3 is next. Hosted storage remains deferred to Phase 4.
 
 ## 1. Read this first
 
@@ -465,7 +465,7 @@ The portfolio release is ready when:
 
 ## 14. Handoff status
 
-Phase 1 is implemented and locally verified. Open `http://vehiserve-v2.test` with
+Phases 1 and 2 are implemented and locally verified. Open `http://vehiserve-v2.test` with
 Herd and local PostgreSQL running. See README.md for startup, installation, and
 all seven fictional demo logins. The owner handles Git; no agent commit was made.
 
@@ -473,8 +473,15 @@ Implemented: shared Fortify/Filament sessions, disabled public registration,
 verified-role panel access, fixed role enum and demo flags, ownership/role policies,
 demo credential protection, UTC/Manila configuration, domain migrations with
 foreign keys/indexes/checks, and repeatable fictional user/vehicle/driver seeds.
-The base UI deliberately describes the unfinished request workflow. The retained
-DHVSU logo was the only copied legacy asset; no legacy data or secrets were copied.
+Phase 2 adds request creation, ownership-scoped list/detail screens, Filament
+approver queues, preliminary availability checks, and the full approval chain to
+ready-to-schedule. Shared transition logic locks/re-reads requests, rejects stale
+decisions, and saves state and history together. Rejection/cancellation require a
+reason; scheduled cancellation releases the booking. Actor names are snapshotted
+in history. Submitted details are read-only. Date validation enforces valid dates
+and return-after-departure, but does not prohibit past departures.
+The retained DHVSU logo was the only copied legacy asset; no legacy data or secrets
+were copied. Two fictional browser-walkthrough requests remain as local examples.
 
 Local PostgreSQL binaries and data are under `%LOCALAPPDATA%\Vehiserve`, outside the
 repository. Development uses `vehiserve`; tests use `vehiserve_test`, with a separate
@@ -482,9 +489,11 @@ non-superuser application role. PostgreSQL is not a Windows service and must be
 started after reboot using the README commands. `.env` contains generated local
 credentials and is ignored; `.env.example` contains no secret values.
 
-Verification: 61 tests / 305 assertions passed, Pint and PHPStan passed, Composer
-validation passed, production Vite build passed, and package audits were clean.
-Real Herd HTTP and desktop/mobile browser checks passed for login, shared panel
-access, and layout overflow, with no JavaScript errors. CI configuration is written;
-GitHub execution, hosted services, inbox delivery, and public logo permission are
-not verified. Next: Phase 2 requester forms and transactional approval actions.
+Verification: 112 tests / 675 assertions passed, including a real two-process
+PostgreSQL row-lock/stale-decision test. Pint, PHPStan, and the production Vite build
+passed. Desktop/mobile browser checks covered submission, all five approval steps,
+Filament queues, and cancellation without JS errors or horizontal overflow.
+Composer validation and package audits passed in Phase 1; Phase 2 added no dependencies.
+CI configuration is written; GitHub execution, hosted services, inbox delivery,
+and public logo permission are not verified. Next: Phase 3 fleet management,
+transactional scheduling, and trip completion.
