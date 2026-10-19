@@ -53,7 +53,7 @@ class ShowRequest extends Component
 
     public function render(): View
     {
-        $trip = TripRequest::with(['requester', 'passengers', 'events'])->findOrFail($this->tripId);
+        $trip = TripRequest::with(['requester', 'passengers', 'events', 'booking.vehicle', 'booking.driver'])->findOrFail($this->tripId);
         $this->authorize('view', $trip);
         $user = User::query()->findOrFail(Auth::id());
         $availability = $user->role === Role::MotorPool && $trip->state === RequestState::Submitted

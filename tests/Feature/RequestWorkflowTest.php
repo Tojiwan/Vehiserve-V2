@@ -275,7 +275,7 @@ it('shows only the relevant stage in reviewer queues and keeps admin read-only',
     $this->actingAs($actor);
     Filament::setCurrentPanel(Filament::getPanel('admin'));
     $queue = Livewire::test(ListTripRequests::class)->assertCanSeeTableRecords([$awaiting]);
-    if (in_array($role, [Role::Admin, Role::SuperAdmin], true)) {
+    if (in_array($role, [Role::Admin, Role::SuperAdmin, Role::MotorPool], true)) {
         $queue->assertCanSeeTableRecords([$finished]);
     } else {
         $queue->assertCanNotSeeTableRecords([$finished]);

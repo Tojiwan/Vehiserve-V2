@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\BookingState;
 use App\Enums\RequestState;
 use App\Models\TripRequest;
 use App\Models\User;
@@ -46,8 +47,8 @@ class TransitionTripRequest
             }
 
             if ($action === 'cancel' && $trip->state === RequestState::Scheduled) {
-                DB::table('bookings')->where('trip_request_id', $trip->id)->where('state', 'active')
-                    ->update(['state' => 'cancelled', 'updated_at' => now()]);
+                DB::table('bookings')->where('trip_request_id', $trip->id)->where('state', BookingState::Active->value)
+                    ->update(['state' => BookingState::Cancelled->value, 'updated_at' => now()]);
             }
             $previous = $trip->state;
             $trip->state = $next;

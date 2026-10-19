@@ -8,6 +8,11 @@ use App\Models\User;
 
 class DriverPolicy
 {
+    public function viewAny(User $user): bool
+    {
+        return $user->hasVerifiedEmail() && $user->role !== Role::User;
+    }
+
     public function create(User $user): bool
     {
         return $user->hasVerifiedEmail() && $user->role === Role::MotorPool;

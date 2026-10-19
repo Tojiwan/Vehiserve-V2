@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\BookingState;
 use App\Models\Driver;
 use App\Models\TripRequest;
 use App\Models\User;
@@ -22,10 +23,10 @@ class CheckAvailability
             if ($table === 'vehicles') {
                 $query->where('passenger_capacity', '>=', $trip->passengers()->count());
             }
-            // Preliminary only: scheduling must lock resources and recheck conflicts in Phase 3.
+            // Counts resources free for these times; AssignTrip rechecks under locks before booking.
             $query->whereNotExists(function (Builder $bookings) use ($trip, $table, $foreignKey) {
                 $bookings->selectRaw('1')->from('bookings')->whereColumn($foreignKey, $table.'.id')
-                    ->where('state', 'active')->where('departure_at', '<', $trip->return_at)
+                    ->where('state', BookingState::Active->value)->where('departure_at', '<', $trip->return_at)
                     ->where('return_at', '>', $trip->departure_at);
             });
             $counts[$table] = $query->count();

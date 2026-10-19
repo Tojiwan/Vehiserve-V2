@@ -4,13 +4,17 @@ namespace App\Models;
 
 use App\Enums\RequestState;
 use App\Enums\Role;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property RequestState $state
+ * @property CarbonImmutable $departure_at
+ * @property CarbonImmutable $return_at
  */
 class TripRequest extends Model
 {
@@ -41,6 +45,12 @@ class TripRequest extends Model
     public function events(): HasMany
     {
         return $this->hasMany(RequestEvent::class)->orderBy('id');
+    }
+
+    /** @return HasOne<Booking, $this> */
+    public function booking(): HasOne
+    {
+        return $this->hasOne(Booking::class);
     }
 
     /** @param Builder<TripRequest> $query */

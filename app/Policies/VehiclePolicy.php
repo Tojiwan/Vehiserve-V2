@@ -8,6 +8,11 @@ use App\Models\Vehicle;
 
 class VehiclePolicy
 {
+    public function viewAny(User $user): bool
+    {
+        return $user->hasVerifiedEmail() && $user->role !== Role::User;
+    }
+
     public function create(User $user): bool
     {
         return $user->hasVerifiedEmail() && $user->role === Role::MotorPool;

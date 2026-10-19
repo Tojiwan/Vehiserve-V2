@@ -38,6 +38,16 @@
                     @foreach ($trip->passengers as $passenger)<li>{{ $passenger->name }}</li>@endforeach
                 </ul>
             </section>
+            @if ($trip->booking)
+                <section class="space-y-4" aria-labelledby="assignment">
+                    <flux:heading level="2" size="lg" id="assignment">Assignment</flux:heading>
+                    <dl class="space-y-4">
+                        <div><dt class="font-medium">Vehicle</dt><dd class="mt-1 text-zinc-600 dark:text-zinc-300">{{ $trip->booking->vehicle->plate }} · {{ $trip->booking->vehicle->name }}</dd></div>
+                        <div><dt class="font-medium">Driver</dt><dd class="mt-1 text-zinc-600 dark:text-zinc-300">{{ $trip->booking->driver->name }}</dd></div>
+                        <div><dt class="font-medium">Booking status</dt><dd class="mt-1 text-zinc-600 dark:text-zinc-300">{{ $trip->booking->state->label() }}</dd></div>
+                    </dl>
+                </section>
+            @endif
         </div>
 
         <section aria-labelledby="history">
@@ -45,7 +55,7 @@
             <ol class="mt-4 divide-y divide-zinc-200 dark:divide-zinc-700">
                 @foreach ($trip->events as $event)
                     <li class="space-y-2 py-4 first:pt-0">
-                        <flux:heading level="3">{{ match ($event->action) { 'submitted' => 'Request submitted', 'approve' => $event->from_state === \App\Enums\RequestState::Submitted ? 'Availability checked' : 'Approved', 'reject' => 'Rejected', 'cancel' => 'Cancelled', default => ucfirst($event->action) } }}</flux:heading>
+                        <flux:heading level="3">{{ match ($event->action) { 'submitted' => 'Request submitted', 'approve' => $event->from_state === \App\Enums\RequestState::Submitted ? 'Availability checked' : 'Approved', 'reject' => 'Rejected', 'cancel' => 'Cancelled', 'scheduled' => 'Vehicle and driver assigned', 'completed' => 'Trip completed', default => ucfirst($event->action) } }}</flux:heading>
                         <flux:text>{{ $event->actor_name }} · {{ $event->created_at->setTimezone(config('vehiserve.display_timezone'))->format('M j, Y · g:i:s A') }} Manila</flux:text>
                         <flux:text>{{ $event->to_state->label() }}</flux:text>
                         @if ($event->reason)<flux:text class="whitespace-pre-line break-words">{{ $event->reason }}</flux:text>@endif
@@ -78,7 +88,7 @@
         </section>
     @endif
     @if ($trip->state === \App\Enums\RequestState::ReadyToSchedule)
-        <flux:text>All approvals are complete. Vehicle and driver assignment will be available in Phase 3.</flux:text>
+        <flux:text>All approvals are complete. Motor Pool staff will assign a vehicle and driver from the staff panel.</flux:text>
     @elseif ($trip->state->reviewer())
         <flux:text>Next action: {{ $trip->state->reviewer()->label() }} will review this request.</flux:text>
     @endif

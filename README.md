@@ -5,10 +5,10 @@ accounts and fleet records are fictional. This is not an official university ser
 
 ## Current build
 
-Phases 1 and 2 provide shared authentication, fixed roles, demo safeguards,
-PostgreSQL schema and fictional seeds, request submission/tracking, staff approval
-queues, and a recorded decision timeline. Scheduling and fleet management are next
-in Phase 3; attachments and notifications follow in Phase 4.
+Phases 1–3 provide shared authentication, fixed roles, demo safeguards, PostgreSQL
+schema and fictional seeds, request submission/tracking, staff approval queues, a
+recorded decision timeline, fleet management, transactional scheduling, and trip
+completion. Attachments, documents, and notifications follow in Phase 4.
 
 Installed: PHP 8.4, Laravel 13.37.0, Filament 5.10.2, Livewire 4.4.7,
 Fortify 1.41.0, Pest 4.7.8, PostgreSQL 18.6, Node 24.22.0, npm 11.19.1,
@@ -119,9 +119,10 @@ accounts and fleet records, preserving existing ones. It is not a demo reset com
 
 ## Checks
 
-The latest local verification passed 112 tests / 675 assertions, formatting,
-static analysis, and the production asset build. A two-process PostgreSQL test
-verifies concurrent approvals wait on a lock and cannot overwrite a newer decision.
+The latest local verification passed 141 tests / 813 assertions, formatting,
+static analysis, and the production asset build. Two-process PostgreSQL tests
+verify concurrent approvals wait on a lock and cannot overwrite a newer decision,
+and concurrent assignments cannot double-book a vehicle or a driver shared by different vehicles.
 
 ```powershell
 composer ci:check
@@ -162,11 +163,31 @@ before recording another decision. History retains the actor's name at decision 
 Submissions allow 1–60 passengers (excluding the driver) and at most five requests
 per user per minute. Dates must be valid with return after departure; past departures
 are currently permitted. Preliminary availability checks do not reserve vehicles or
-drivers. Scheduling will perform a fresh transactional check in Phase 3.
+drivers; scheduling performs the fresh transactional check.
 
-Two fictional browser-walkthrough requests are retained locally as examples; they
+Four fictional browser-walkthrough requests remain in the development database as
+examples at every stage (ready to schedule, scheduled, completed, cancelled); they
 are not part of the repeatable seed yet. After pulling these changes elsewhere,
 run `php artisan migrate` to add the history actor-name snapshot column.
+
+### Fleet and scheduling
+
+1. Stay signed in as Motor Pool Staff and use **Request queue**. Requests ready for
+   transport appear with a **Schedule** action; pick a vehicle and driver from the
+   options that are free for the trip window, then submit.
+2. Open **Schedule** in the staff panel for the month calendar and bookings list.
+   Both show Manila times and include active and completed trips. Completed trips
+   leave the request queue.
+3. Use **Complete trip** on a scheduled request to close it. The actual completion
+   time is recorded in history and the vehicle/driver are released.
+4. Manage **Vehicles** (plate, capacity, status) and **Drivers** (contact, license,
+   availability) from the staff panel. Records with bookings are kept for history.
+
+Scheduling locks the request, vehicle, and driver, rechecks half-open overlaps for
+active bookings, and writes the booking, state change, and audit event in one
+transaction. Cancelled and completed bookings do not block. Rescheduling is not
+exposed yet: cancel and submit a new request when plans change. Demo staff only see
+and assign demo resources, and fleet records created by demo accounts stay demo-owned.
 
 ### Development conventions
 
@@ -175,8 +196,9 @@ run `php artisan migrate` to add the history actor-name snapshot column.
   (`Asia/Manila`). Conversion and database date ordering are covered by tests.
 - Apply policies in every action. Ownership query scopes do not replace authorization.
 - All approval/rejection/cancellation entry points use `TransitionTripRequest`,
-  which locks/re-reads the request and atomically appends history. Upcoming
-  scheduling actions must recheck conflicts in a transaction.
+  and all assignment/completion entry points use `AssignTrip`/`CompleteTrip`, which
+  lock/re-read rows and atomically append history. Never write bookings outside
+  `AssignTrip`.
 - Local uploads stay private; attachments and hosted storage are Phase 4 work.
 - Password-reset mail uses the local log transport. Brevo and actual inbox
   delivery are not configured yet. Keep logs private.

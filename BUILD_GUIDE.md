@@ -1,7 +1,7 @@
 # VEHISERVE v2 — Build Guide
 
 Created: October 19, 2026  
-Status: Phase 2 implemented and locally verified; Phase 3 is next. Hosted storage remains deferred to Phase 4.
+Status: Phase 3 implemented and locally verified; Phase 4 is next. Hosted storage remains deferred to Phase 4.
 
 ## 1. Read this first
 
@@ -465,7 +465,7 @@ The portfolio release is ready when:
 
 ## 14. Handoff status
 
-Phases 1 and 2 are implemented and locally verified. Open `http://vehiserve-v2.test` with
+Phases 1–3 are implemented and locally verified. Open `http://vehiserve-v2.test` with
 Herd and local PostgreSQL running. See README.md for startup, installation, and
 all seven fictional demo logins. The owner handles Git; no agent commit was made.
 
@@ -480,8 +480,18 @@ decisions, and saves state and history together. Rejection/cancellation require 
 reason; scheduled cancellation releases the booking. Actor names are snapshotted
 in history. Submitted details are read-only. Date validation enforces valid dates
 and return-after-departure, but does not prohibit past departures.
+Phase 3 adds fleet management and transactional scheduling. `AssignTrip` locks the
+request, vehicle, and driver in a consistent order, rechecks half-open overlaps for
+active bookings, and writes the booking, state change, and audit event together;
+`CompleteTrip` records the actual completion time. Filament queues offer Schedule
+and Complete actions and only list resources free for the trip window. Demo staff can
+only assign demo resources, and fleet records created by demo accounts stay demo-owned.
+The Schedule page shows a month calendar plus a bookings list in Manila time. The
+mobile calendar scrolls horizontally rather than collapsing columns. Rescheduling is
+deliberately not exposed; cancel and resubmit is the supported path.
 The retained DHVSU logo was the only copied legacy asset; no legacy data or secrets
-were copied. Two fictional browser-walkthrough requests remain as local examples.
+were copied. Fictional walkthrough requests and bookings remain as local examples at
+every stage (ready to schedule, scheduled, completed, cancelled).
 
 Local PostgreSQL binaries and data are under `%LOCALAPPDATA%\Vehiserve`, outside the
 repository. Development uses `vehiserve`; tests use `vehiserve_test`, with a separate
@@ -489,11 +499,12 @@ non-superuser application role. PostgreSQL is not a Windows service and must be
 started after reboot using the README commands. `.env` contains generated local
 credentials and is ignored; `.env.example` contains no secret values.
 
-Verification: 112 tests / 675 assertions passed, including a real two-process
-PostgreSQL row-lock/stale-decision test. Pint, PHPStan, and the production Vite build
-passed. Desktop/mobile browser checks covered submission, all five approval steps,
-Filament queues, and cancellation without JS errors or horizontal overflow.
-Composer validation and package audits passed in Phase 1; Phase 2 added no dependencies.
-CI configuration is written; GitHub execution, hosted services, inbox delivery,
-and public logo permission are not verified. Next: Phase 3 fleet management,
-transactional scheduling, and trip completion.
+Verification: 141 tests / 813 assertions passed, including real two-process
+PostgreSQL tests for stale decisions and vehicle/driver booking conflicts. Pint, PHPStan, and
+the production Vite build passed. Desktop/mobile browser checks covered submission,
+all five approval steps, Filament queues, the schedule modal, the calendar/list,
+completion, requester assignment views, and cancellation without JS errors or
+horizontal page overflow. Composer validation and package audits passed in Phase 1;
+Phases 2–3 added no dependencies. CI configuration is written; GitHub execution,
+hosted services, inbox delivery, and public logo permission are not verified.
+Next: Phase 4 files, documents, and notifications.

@@ -103,20 +103,36 @@ are not prohibited. Scheduling and attachments remain Phase 3/4 work.
 
 ## Phase 3 — Fleet and scheduling
 
-- [ ] Implement vehicle management with unique plates and passenger capacity.
-- [ ] Implement driver management and operational availability.
-- [ ] Implement booking assignments through one shared transaction path.
-- [ ] Lock/revalidate resources and check overlapping intervals before assigning.
-- [ ] Reject unavailable vehicles/drivers and insufficient vehicle capacity.
-- [ ] Implement schedule list and a usable calendar view.
-- [ ] Implement scheduled-trip cancellation and resource release.
-- [ ] Implement trip completion with an audit event.
-- [ ] Define and enforce rescheduling rules if rescheduling is exposed.
-- [ ] Test vehicle conflicts, driver conflicts, and cancelled-booking exclusion.
-- [ ] Test adjacent bookings, timezone conversion, and invalid time ranges.
-- [ ] Verify simultaneous booking attempts cannot double-book a resource.
+- [x] Implement vehicle management with unique plates and passenger capacity.
+- [x] Implement driver management and operational availability.
+- [x] Implement booking assignments through one shared transaction path.
+- [x] Lock/revalidate resources and check overlapping intervals before assigning.
+- [x] Reject unavailable vehicles/drivers and insufficient vehicle capacity.
+- [x] Implement schedule list and a usable calendar view.
+- [x] Implement scheduled-trip cancellation and resource release.
+- [x] Implement trip completion with an audit event.
+- [x] Define and enforce rescheduling rules if rescheduling is exposed.
+- [x] Test vehicle conflicts, driver conflicts, and cancelled-booking exclusion.
+- [x] Test adjacent bookings, timezone conversion, and invalid time ranges.
+- [x] Verify simultaneous booking attempts cannot double-book a resource.
 
-Evidence / blockers: Pending.
+Evidence: `composer ci:check` passed (Pint, PHPStan, 141 tests / 813 assertions).
+Production Vite build passed. `AssignTrip` locks request → vehicle → driver in one
+transaction, rechecks half-open overlaps for active bookings only, and rejects
+unavailable, maintenance, missing-capacity, or conflicting resources with field
+errors. `CompleteTrip` records the actual completion time in history and closes the
+booking. Filament queues expose Schedule and Complete actions, offer only resources
+that are free for the trip window, and reject a stale modal submission when another
+staff member books first. Demo staff can only assign demo resources; created fleet
+records inherit the creator's demo status. Vehicle and driver pages manage plates,
+capacity, contact details, and availability. `Booking` + `BookingState` centralize
+overlap queries. The Schedule page shows a month calendar plus a bookings list in
+Manila time and filters demo bookings from demo staff. Rescheduling is deliberately
+not exposed; cancel and resubmit is the supported path. SchedulingConcurrencyTest
+starts a second PHP process, holds the vehicle row lock, and proves the concurrent
+assignment waits and then loses as a conflict (one booking, loser unchanged).
+Browser checks covered approvals, the schedule modal, calendar/list, completion,
+requester assignment views, fleet pages, and the mobile calendar without JS errors.
 
 ## Phase 4 — Files, documents, and notifications
 
@@ -307,6 +323,33 @@ Only start these if requested after the core release:
   the existing server was accepting connections. README now includes a readiness check.
 - Updated guide, checklist, and README. No agent commit made.
 - Next: Phase 3 fleet management, vehicle/driver assignment, scheduling, and completion.
+
+### October 19, 2026 — Phase 3 fleet and scheduling verified
+
+- Added `Booking`/`BookingState`, `AssignTrip`, and `CompleteTrip`; scheduling is
+  the only reservation path and every entry point shares it.
+- Added Filament vehicle/driver management, Schedule/Complete queue actions, and a
+  Schedule page with a month calendar and bookings list (Manila time). The mobile
+  calendar scrolls horizontally instead of collapsing.
+- Added 16 feature tests, a two-process double-booking concurrency test, and browser
+  walkthrough checks (desktop + mobile). No schema changes were needed.
+- Rescheduling is not exposed; cancel and resubmit is the supported path for now.
+- Two existing demo requests were scheduled during the browser walkthrough; one was
+  completed and one remains scheduled. A ready-to-schedule example also remains.
+  No agent commit made.
+- Next: Phase 4 files, documents, and notifications.
+
+### October 19, 2026 — Phase 3 review fixes
+
+- Fixed empty/malformed calendar month handling and converted month query bounds
+  to UTC so early-morning Manila bookings appear in the correct month.
+- Scoped demo fleet tables to demo records, including driver contact/license data;
+  restored mass-assignment protection for fleet demo flags.
+- Matched capacity validation to PostgreSQL's signed smallint limit (32767).
+- Added regression tests, assignment/completion audit-failure rollback checks, and
+  a second concurrency scenario with different vehicles sharing one driver.
+- Full local gate passed: Pint, PHPStan, 141 tests / 813 assertions. Browser and
+  asset-build checks were not repeated for these PHP-only changes.
 
 ## Release record
 
