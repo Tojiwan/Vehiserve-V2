@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property RequestState $state
+ */
 class TripRequest extends Model
 {
     protected $fillable = ['request_number', 'office', 'purpose', 'destination', 'departure_at', 'return_at'];

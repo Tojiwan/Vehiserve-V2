@@ -1,7 +1,7 @@
 # VEHISERVE v2 — Build Guide
 
 Created: October 19, 2026  
-Status: Phase 0 complete for development; hosted storage explicitly deferred to Phase 4.
+Status: Phase 1 implemented and locally verified; Phase 2 is next. Hosted storage remains deferred to Phase 4.
 
 ## 1. Read this first
 
@@ -23,9 +23,9 @@ credentials, uploaded IDs, signatures, or personal records.
 
 ### Phase 0 recheck after folder relocation — October 19, 2026
 
-The parent directory now contains the legacy reference and the new project as
-sibling folders. The new project still contains only this guide and the checklist;
-initialize its separate Git repository inside `vehiserve-v2`, not in the parent.
+The parent directory contains the legacy reference and the new project as sibling
+folders. At the Phase 0 recheck the new project contained only the guide and checklist.
+The owner now manages its separate Git repository inside `vehiserve-v2`.
 
 Read-only legacy source review confirmed vehicle-request terminology (office/college,
 purpose, destination, departure, passengers), Motor Pool availability, and Dean,
@@ -77,29 +77,34 @@ or workflow implementation to copy. No legacy data or credentials were copied.
 | Item | Selected version |
 | --- | --- |
 | PHP | 8.4; local CLI is 8.4.26, with intl and pdo_pgsql enabled |
-| Laravel | 13.x; current stable package observed: 13.37.0; requires PHP ^8.3 |
-| Filament | 5.x; current stable package observed: 5.10.2; supports Laravel 13 |
-| Livewire | 4.x; current stable package observed: 4.4.7; required by Filament 5.10.2 |
-| PostgreSQL | Target 18, supported by Neon; no local installation found in standard location or Windows services |
-| Node.js | Target 24 LTS (24.22.0 observed); current local Node is 26.11.1 |
+| Laravel | Installed 13.37.0; project PHP requirement ^8.4 |
+| Filament | Installed 5.10.2 |
+| Livewire | Installed 4.4.7; Fortify 1.41.0 and Flux 2.20.1 |
+| PostgreSQL | Installed EDB 18.6-5 binaries; PostgreSQL 18.6, local-only listener on 127.0.0.1:5432 |
+| Node.js | Installed 24.22.0 via Herd's nvm; `.nvmrc` selects it; other shells may still default to Node 26 |
+| npm / Vite | npm 11.19.1 bundled with Node 24; Vite 8.3.4; production build verified |
+| Tests | Pest 4.7.8; PostgreSQL-backed feature tests |
 | PDF package | barryvdh/laravel-dompdf 3.1.2 supports Laravel 13; install during document phase |
 | Object-storage provider | Owner deferred selection to Phase 4; private local storage during development |
 
 The legacy app used PHP 8.2 because of its old lock file. Do not carry that lock
 file or PHP restriction into this new project.
 
-These are selected release lines and observed package versions, not installed
-dependencies. Full Composer resolution, the chosen scaffold's Vite engine checks,
-and a production build must pass in Phase 1. Exact installed versions will be
-recorded in lockfiles. Composer 2.10.3 is available locally. PostgreSQL and Docker
-commands were not found on PATH; PostgreSQL installation remains a Phase 1 task.
+Composer 2.10.3 resolved the installed stack; exact versions are in `composer.lock`
+and `package-lock.json`. The current official Livewire starter source was used
+(commit `0f62a26c4e4b401c1300930f47d72a497add8cce`), because its old tagged release
+still targeted Laravel 12/Livewire 3. Public registration, passkeys, and two-factor
+features were removed through its installer; password reset, confirmation, and
+email verification remain. Standard Vite replaces the starter's Vite+ tooling,
+removing vulnerable transitive dependencies and 72 unnecessary npm packages.
+Both package audits reported no advisories after the change.
 
-Relocation recheck reproduced PHP 8.4.26, Composer 2.10.3, Node 26.11.1,
+The earlier Phase 0 relocation recheck reproduced PHP 8.4.26, Composer 2.10.3, Node 26.11.1,
 and enabled intl/pdo_pgsql extensions. Herd and Git are on PATH; psql and Docker
 are not. No PostgreSQL Windows service or `C:\Program Files\PostgreSQL` directory
 was found. Fresh Packagist metadata confirms the package versions above:
 Filament support 5.10.2 accepts Illuminate 13 and requires Livewire ^4.4.7;
-Livewire 4.4.7 accepts Illuminate 13. Full dependency resolution remains Phase 1.
+Livewire 4.4.7 accepts Illuminate 13. Phase 1 subsequently verified full resolution.
 
 Requirements sources:
 - https://laravel.com/docs/13.x/releases
@@ -460,9 +465,26 @@ The portfolio release is ready when:
 
 ## 14. Handoff status
 
-Only this guide and `checklist.md` exist here; no Laravel scaffold, Git repository,
-provider resource, or database has been created for v2. Phase 0 is complete for
-starting development: workflow/branding and target release lines are recorded,
-and the owner explicitly deferred hosted storage selection to Phase 4. Full
-dependency resolution and local PostgreSQL setup belong to Phase 1. Public logo
-permission verification remains a publication task. Next: begin Phase 1 when requested.
+Phase 1 is implemented and locally verified. Open `http://vehiserve-v2.test` with
+Herd and local PostgreSQL running. See README.md for startup, installation, and
+all seven fictional demo logins. The owner handles Git; no agent commit was made.
+
+Implemented: shared Fortify/Filament sessions, disabled public registration,
+verified-role panel access, fixed role enum and demo flags, ownership/role policies,
+demo credential protection, UTC/Manila configuration, domain migrations with
+foreign keys/indexes/checks, and repeatable fictional user/vehicle/driver seeds.
+The base UI deliberately describes the unfinished request workflow. The retained
+DHVSU logo was the only copied legacy asset; no legacy data or secrets were copied.
+
+Local PostgreSQL binaries and data are under `%LOCALAPPDATA%\Vehiserve`, outside the
+repository. Development uses `vehiserve`; tests use `vehiserve_test`, with a separate
+non-superuser application role. PostgreSQL is not a Windows service and must be
+started after reboot using the README commands. `.env` contains generated local
+credentials and is ignored; `.env.example` contains no secret values.
+
+Verification: 61 tests / 305 assertions passed, Pint and PHPStan passed, Composer
+validation passed, production Vite build passed, and package audits were clean.
+Real Herd HTTP and desktop/mobile browser checks passed for login, shared panel
+access, and layout overflow, with no JavaScript errors. CI configuration is written;
+GitHub execution, hosted services, inbox delivery, and public logo permission are
+not verified. Next: Phase 2 requester forms and transactional approval actions.

@@ -23,10 +23,10 @@ Specification: [BUILD_GUIDE.md](BUILD_GUIDE.md)
 - [x] Confirm Render + Neon and acceptance of free-host cold starts.
 - [x] Decide storage timing: owner deferred provider selection to Phase 4; use private local storage for development.
 - [x] Review declared package compatibility and select target release lines.
-- [ ] Verify full Composer resolution and scaffold asset-tool compatibility during Phase 1.
+- [x] Verify full Composer resolution and scaffold asset-tool compatibility during Phase 1.
 - [x] Record target versions, local tool findings, and approved decisions in the build guide.
 
-Evidence / blockers: Owner approved workflow defaults and Render + Neon; requested
+Phase 0 evidence (historical; see Phase 1 below for installed tooling): Owner approved workflow defaults and Render + Neon; requested
 DHVSU logo retention with new typography/icons. Reviewed official requirements and
 Packagist metadata for Laravel 13.37.0, Filament 5.10.2, Livewire 4.4.7, and Dompdf
 integration 3.1.2. Local PHP 8.4.26 and Composer 2.10.3 are available with required
@@ -38,25 +38,35 @@ belongs to Phase 1, storage selection to Phase 4, and logo permission to publica
 
 ## Phase 1 — Project foundation
 
-- [ ] Initialize a separate Git repository without copying legacy secrets or data.
-- [ ] Scaffold Laravel while preserving the handoff documents.
-- [ ] Install compatible Filament and the chosen Livewire authentication scaffolding.
-- [ ] Select Node 24 LTS for the project and verify Vite engine requirements.
-- [ ] Verify full Composer dependency resolution and record exact lockfile versions.
-- [ ] Link a distinct Herd domain, such as `vehiserve-v2.test`.
-- [ ] Install/configure local PostgreSQL and create development/test databases.
-- [ ] Add placeholder-only `.env.example` and appropriate `.gitignore`/`.dockerignore` rules.
-- [ ] Set timezone handling: store UTC, display/input Asia/Manila.
-- [ ] Implement users, fixed roles, and `is_demo` flags.
-- [ ] Configure shared authentication, password reset, sessions, and panel access.
-- [ ] Add policies for requester ownership and role-restricted actions.
-- [ ] Add domain migrations with foreign keys and relevant indexes.
-- [ ] Create initial fictional users, vehicles, and drivers.
-- [ ] Establish Pest and PostgreSQL-backed feature tests.
-- [ ] Add CI checks for tests, formatting, and asset build using the chosen versions.
-- [ ] Verify a fresh local install, migrations, login, and production asset build.
+- [x] Initialize a separate Git repository without copying legacy secrets or data. (Owner-managed.)
+- [x] Scaffold Laravel while preserving the handoff documents.
+- [x] Install compatible Filament and the chosen Livewire authentication scaffolding.
+- [x] Select Node 24 LTS for the project and verify Vite engine requirements.
+- [x] Verify full Composer dependency resolution and record exact lockfile versions.
+- [x] Link a distinct Herd domain, such as `vehiserve-v2.test`.
+- [x] Install/configure local PostgreSQL and create development/test databases.
+- [x] Add placeholder-only `.env.example` and appropriate `.gitignore`/`.dockerignore` rules.
+- [x] Set timezone handling: store UTC, display/input Asia/Manila.
+- [x] Implement users, fixed roles, and `is_demo` flags.
+- [x] Configure shared authentication, password reset, sessions, and panel access.
+- [x] Add policies for requester ownership and role-restricted actions.
+- [x] Add domain migrations with foreign keys and relevant indexes.
+- [x] Create initial fictional users, vehicles, and drivers.
+- [x] Establish Pest and PostgreSQL-backed feature tests.
+- [x] Add CI checks for tests, formatting, and asset build using the chosen versions.
+- [x] Verify a fresh local install, migrations, login, and production asset build.
 
-Evidence / blockers: Pending.
+Evidence: `composer ci:check` passed (Pint, PHPStan, 61 tests / 305 assertions),
+`composer validate --strict` passed, and `npm run build` passed under Node 24.22.0.
+Composer/npm audits found no advisories. Initial migrations/seeding passed on local
+PostgreSQL 18.6; tests migrated the separate disposable database. Herd HTTP login
+and shared panel sessions passed, as did desktop/mobile browser smoke checks.
+Policy tests cover all roles/stages, ownership, demo isolation, cancellation,
+scheduling permissions, credential changes, reset-token bypass, and account history.
+UTC/Manila roundtrip and PostgreSQL date/capacity checks passed. Git root verified
+at the nested project path; owner handles repository setup/commits.
+CI workflow is configured and its checks passed locally; hosted GitHub execution
+is not yet verified. PostgreSQL needs manual startup after reboot (README).
 
 ## Phase 2 — Trip requests and approvals
 
@@ -248,6 +258,28 @@ Only start these if requested after the core release:
   complete for development; next is Phase 1 in the corrected project directory.
 - No scaffold, dependency installation, application tests, or provider setup run.
   Public logo permission and full Composer/build verification remain unchecked.
+
+### October 19, 2026 — Phase 1 foundation verified
+
+- Owner took responsibility for Git; agent made no commits or repository initialization.
+- Installed the current official Laravel/Livewire scaffold and compatible Filament,
+  Fortify, and Pest dependencies. Lockfiles record exact versions.
+- Installed Node 24.22.0 and PostgreSQL 18.6 binaries; created separate local
+  development/test databases and a non-superuser application role. Linked Herd.
+- Added the domain schema, roles, demo flags, ownership and role policies, fictional
+  seeds, shared authenticated workspaces, and server-side demo account protections.
+- Fixed PostgreSQL session timezone after a conversion test exposed the machine's
+  default timezone. Replaced Vite+ with standard Vite after npm audit flagged its
+  transitive dependencies; the final dependency audits are clean.
+- Verified 61 tests / 305 assertions, Pint, PHPStan, Composer validation, production
+  assets, real Herd login, and desktop/mobile browser navigation without JS errors.
+- Added README installation/startup/demo credentials and a PostgreSQL-backed CI workflow.
+- A final in-place `npm ci` encountered Windows native-module locks from a running
+  Vite server. Restored dependencies with `npm install` and rebuilt successfully;
+  isolated `npm ci` from the same lockfile passed. Stop Vite before future clean installs.
+- Next: Phase 2 request creation, ownership-scoped pages, and transactional approvals.
+- Still external/unverified: GitHub CI run, hosted services, real inbox delivery,
+  hosted storage selection, and public DHVSU logo permission.
 
 ## Release record
 

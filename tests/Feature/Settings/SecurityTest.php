@@ -12,12 +12,6 @@ class SecurityTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-    }
-
     public function test_security_settings_page_can_be_rendered(): void
     {
         $user = User::factory()->create();
@@ -55,8 +49,6 @@ class SecurityTest extends TestCase
             ->assertDontSee('Add a passkey to sign in without a password')
             ->assertDontSee('Two-factor authentication');
     }
-
-    public function test_two_factor_authentication_disabled_when_confirmation_abandoned_between_requests(): void {}
 
     public function test_password_can_be_updated(): void
     {
