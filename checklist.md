@@ -136,9 +136,9 @@ requester assignment views, fleet pages, and the mobile calendar without JS erro
 
 ## Phase 4 — Files, documents, and notifications
 
-- [ ] Select private object-storage provider after reviewing free limits and billing requirements with the owner.
+- [ ] Select private object-storage provider after reviewing free limits and billing requirements with the owner (deferred to Phase 6).
 - [x] Confirm permitted upload types and size limits.
-- [ ] Configure approved private object storage and local development storage.
+- [ ] Configure approved private object storage and local development storage (local private storage verified; hosted storage deferred to Phase 6).
 - [x] Implement file-type/size validation and opaque storage paths.
 - [x] Implement authorized uploads and short-lived private downloads.
 - [x] Add attachment ownership and document categories to request screens.
@@ -156,7 +156,10 @@ requester assignment views, fleet pages, and the mobile calendar without JS erro
 - [x] Verify real inbox delivery to an owner-controlled recipient.
 - [x] Verify the real password-reset email and reset flow with an owner-controlled non-demo account.
 
-Evidence: `composer ci:check` passed (Pint, PHPStan, 161 tests / 910 assertions).
+Evidence: final Phase 4 revalidation passed `composer ci:check` (Pint, PHPStan,
+170 tests / 939 assertions), production Vite build, Composer validation, and
+Composer/npm audits with no reported vulnerabilities. Desktop/mobile browser
+checks passed again, including the exact 5 MB upload/download/delete lifecycle.
 Owner decisions, October 19, 2026: uploads are PDF/JPEG/PNG only, 5 MB per file,
 at most 3 per request, in fixed categories (Endorsement letter, Supporting
 document, Other); requester-only uploads until a request is terminal, uploader-only
