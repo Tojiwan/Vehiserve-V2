@@ -16,7 +16,7 @@ class TransitionTripRequest
 {
     public function handle(User $actor, int $id, RequestState $expectedState, string $action, ?string $reason = null): TripRequest
     {
-        return DB::transaction(function () use ($actor, $id, $expectedState, $action, $reason): TripRequest {
+        $trip = DB::transaction(function () use ($actor, $id, $expectedState, $action, $reason): TripRequest {
             $trip = TripRequest::query()->lockForUpdate()->findOrFail($id);
             Gate::forUser($actor)->authorize('view', $trip);
             if ($trip->state !== $expectedState) {
@@ -61,5 +61,9 @@ class TransitionTripRequest
 
             return $trip;
         });
+
+        DB::afterCommit(fn () => app(NotifyTripChange::class)->handle($trip, $actor, $action, $expectedState, $reason === null ? null : trim($reason)));
+
+        return $trip;
     }
 }

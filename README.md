@@ -5,14 +5,16 @@ accounts and fleet records are fictional. This is not an official university ser
 
 ## Current build
 
-Phases 1–3 provide shared authentication, fixed roles, demo safeguards, PostgreSQL
+Phases 1–4 provide shared authentication, fixed roles, demo safeguards, PostgreSQL
 schema and fictional seeds, request submission/tracking, staff approval queues, a
-recorded decision timeline, fleet management, transactional scheduling, and trip
-completion. Attachments, documents, and notifications follow in Phase 4.
+recorded decision timeline, fleet management, transactional scheduling, trip
+completion, private uploads with signed downloads, generated PDFs, and in-app
+notifications.
 
 Installed: PHP 8.4, Laravel 13.37.0, Filament 5.10.2, Livewire 4.4.7,
 Fortify 1.41.0, Pest 4.7.8, PostgreSQL 18.6, Node 24.22.0, npm 11.19.1,
-and Vite 8.3.4. Exact dependency versions are in the lockfiles.
+Vite 8.3.4, laravel-dompdf 3.1.2, and symfony/brevo-mailer 8.1.0. Exact
+dependency versions are in the lockfiles.
 
 ## Open this local installation
 
@@ -71,7 +73,7 @@ Requirements: PHP 8.4 with `intl`, `pdo_pgsql`, `mbstring`, `dom`, `fileinfo`,
 
 3. Set `DB_PASSWORD` in `.env` to that password. Adjust host/port if necessary.
    Keep `DB_DATABASE=vehiserve`, `SESSION_DRIVER=database`, and `MAIL_MAILER=log`.
-   Then run:
+   Add a `BREVO_API_KEY` only when testing real email (see below). Then run:
 
    ```powershell
    php artisan key:generate
@@ -119,10 +121,15 @@ accounts and fleet records, preserving existing ones. It is not a demo reset com
 
 ## Checks
 
-The latest local verification passed 141 tests / 813 assertions, formatting,
-static analysis, and the production asset build. Two-process PostgreSQL tests
-verify concurrent approvals wait on a lock and cannot overwrite a newer decision,
-and concurrent assignments cannot double-book a vehicle or a driver shared by different vehicles.
+The latest local verification passed 170 tests / 939 assertions, formatting,
+static analysis, and a fresh production asset build. Composer validation and
+Composer/npm audits passed with no reported vulnerabilities. Two-process PostgreSQL tests verify concurrent approvals
+wait on a lock and cannot overwrite a newer decision, and concurrent assignments
+cannot double-book a vehicle or a driver shared by different vehicles. Concurrent
+uploads also respect the three-attachment cap. A
+headless-browser pass verified the dashboard notification list and mark-as-read,
+both generated PDFs, attachment upload, signed download, and deletion, the staff
+read-only view, and the Filament notification bell.
 
 ```powershell
 composer ci:check
@@ -189,6 +196,45 @@ transaction. Cancelled and completed bookings do not block. Rescheduling is not
 exposed yet: cancel and submit a new request when plans change. Demo staff only see
 and assign demo resources, and fleet records created by demo accounts stay demo-owned.
 
+### Attachments and documents
+
+1. As the requester, open a request and use **Add an attachment** to upload an
+   endorsement letter, supporting document, or other file in a fixed category.
+   PDF, JPEG, and PNG up to 5 MB each; at most 3 attachments per request.
+2. Every request page offers **Vehicle request** and **Travel order** PDFs built
+   from the shared trip record, with recorded approver names and times.
+
+Uploads are requester-only and stored on the private `attachments` disk
+(`storage/app/private/attachments`) under server-generated opaque paths; staff
+see them read-only. Downloads use 15-minute signed links and re-check
+authorization on every request, so a shared link still fails for anyone without
+access. Only the uploader can delete, and only while the request is not in a
+terminal state. Demo-owned requests are labeled as samples in generated PDFs; the
+renderer fetches no remote resources.
+
+PHP must allow the advertised upload limit: set `upload_max_filesize=5M` (or
+higher), `post_max_size=8M` (or higher), and a writable `upload_tmp_dir` in the
+PHP configuration used by your web server, then restart it. The reviewed local
+CLI default was only 2 MB. A writable system temp directory is also required;
+generated PDFs use `storage/app/private/dompdf` for their temporary font files.
+The browser review uploaded and downloaded an exact 5 MB PDF with these settings.
+
+### Notifications and email
+
+Workflow decisions send in-app notifications after the decision commits: the next
+reviewer is alerted when a request reaches their stage, the requester when all
+approvals complete, when the trip is scheduled or completed, and on rejection or
+cancellation (with the reason), and motor pool staff when their queue work
+changes. Staff see them in the Filament bell; everyone sees a **Recent updates**
+list on the dashboard with mark-as-read. Demo accounts receive in-app
+notifications only.
+
+Non-demo accounts additionally receive mail through the `brevo` mailer
+(symfony/brevo-mailer HTTPS API, 10-second timeout). To test real delivery, set
+`MAIL_MAILER=brevo`, `BREVO_API_KEY`, and a verified `MAIL_FROM_ADDRESS`; local
+development keeps `MAIL_MAILER=log`. Failed sends are logged, never roll back a
+decision, and are not reported as delivered.
+
 ### Development conventions
 
 - Store timestamps in UTC, including the PostgreSQL connection timezone. Forms
@@ -199,8 +245,13 @@ and assign demo resources, and fleet records created by demo accounts stay demo-
   and all assignment/completion entry points use `AssignTrip`/`CompleteTrip`, which
   lock/re-read rows and atomically append history. Never write bookings outside
   `AssignTrip`.
-- Local uploads stay private; attachments and hosted storage are Phase 4 work.
-- Password-reset mail uses the local log transport. Brevo and actual inbox
-  delivery are not configured yet. Keep logs private.
+- Local uploads stay private on the `attachments` disk under server-generated
+  paths; hosted object storage is deferred to Phase 6. Never copy the legacy SMTP
+  key: Brevo API credentials live only in `.env`.
+- Password-reset and verification links use the request host, or `APP_URL` when
+  generated outside a request. Verify the public HTTPS host at deployment. Real
+  inbox delivery through Laravel's Brevo HTTPS mailer was confirmed by the owner
+  on October 20, 2026. The owner also confirmed password-reset email delivery,
+  password change, and login. Sending from Render remains unverified. Keep logs private.
 - DHVSU logo publication permission remains pending before any public release.
 - Follow [BUILD_GUIDE.md](BUILD_GUIDE.md) and [checklist.md](checklist.md) for scope.

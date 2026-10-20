@@ -108,7 +108,6 @@ it('advances exactly one stage per authorized approval and records each decision
         expect($event->from_state)->toBe($before)->and($event->actor_id)->toBe($actor->id);
     }
     expect($trip->state)->toBe(RequestState::ReadyToSchedule)->and($trip->events()->count())->toBe(6);
-    Notification::assertNothingSent();
 });
 
 it('rejects every wrong approval role and terminal approval stage', function (Role $role) {

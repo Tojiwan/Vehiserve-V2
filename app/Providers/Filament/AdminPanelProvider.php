@@ -29,6 +29,7 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->authGuard('web')
             ->brandName('VEHISERVE · Staff')
+            ->databaseNotifications()
             ->colors([
                 'primary' => Color::Amber,
             ])

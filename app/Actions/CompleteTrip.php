@@ -15,7 +15,7 @@ class CompleteTrip
 {
     public function handle(User $actor, int $id): TripRequest
     {
-        return DB::transaction(function () use ($actor, $id): TripRequest {
+        $trip = DB::transaction(function () use ($actor, $id): TripRequest {
             $trip = TripRequest::query()->lockForUpdate()->findOrFail($id);
             Gate::forUser($actor)->authorize('view', $trip);
             if ($trip->state !== RequestState::Scheduled) {
@@ -37,5 +37,9 @@ class CompleteTrip
 
             return $trip;
         });
+
+        DB::afterCommit(fn () => app(NotifyTripChange::class)->handle($trip, $actor, 'completed'));
+
+        return $trip;
     }
 }

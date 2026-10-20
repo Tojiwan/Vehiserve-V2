@@ -47,6 +47,16 @@ return [
             'report' => false,
         ],
 
+        // Private request attachments; switch this driver to an S3-compatible
+        // bucket before hosted uploads are expected to persist (see BUILD_GUIDE Phase 6).
+        'attachments' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/attachments'),
+            'visibility' => 'private',
+            'throw' => true,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

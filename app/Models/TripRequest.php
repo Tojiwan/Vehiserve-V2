@@ -53,6 +53,12 @@ class TripRequest extends Model
         return $this->hasOne(Booking::class);
     }
 
+    /** @return HasMany<Attachment, $this> */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(Attachment::class)->orderBy('id');
+    }
+
     /** @param Builder<TripRequest> $query */
     public function scopeVisibleTo(Builder $query, User $user): void
     {

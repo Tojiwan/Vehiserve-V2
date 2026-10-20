@@ -60,4 +60,13 @@ class TripRequestPolicy
         return $user->hasVerifiedEmail() && $user->role === Role::MotorPool
             && $this->view($user, $tripRequest) && $tripRequest->state === RequestState::Scheduled;
     }
+
+    /** Attachments uploads are requester-only until the request reaches a terminal state. */
+    public function uploadAttachment(User $user, TripRequest $tripRequest): bool
+    {
+        return $user->hasVerifiedEmail()
+            && $this->view($user, $tripRequest)
+            && $user->role === Role::User
+            && ! in_array($tripRequest->state, [RequestState::Completed, RequestState::Rejected, RequestState::Cancelled], true);
+    }
 }

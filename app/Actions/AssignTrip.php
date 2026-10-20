@@ -17,7 +17,7 @@ class AssignTrip
 {
     public function handle(User $actor, int $id, int $vehicleId, int $driverId): TripRequest
     {
-        return DB::transaction(function () use ($actor, $id, $vehicleId, $driverId): TripRequest {
+        $trip = DB::transaction(function () use ($actor, $id, $vehicleId, $driverId): TripRequest {
             // Lock order request -> vehicle -> driver is shared by every entry point to avoid deadlocks.
             $trip = TripRequest::query()->lockForUpdate()->findOrFail($id);
             Gate::forUser($actor)->authorize('view', $trip);
@@ -65,5 +65,9 @@ class AssignTrip
 
             return $trip;
         });
+
+        DB::afterCommit(fn () => app(NotifyTripChange::class)->handle($trip, $actor, 'scheduled'));
+
+        return $trip;
     }
 }

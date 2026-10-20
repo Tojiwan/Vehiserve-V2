@@ -7,13 +7,16 @@
     "license": "MIT",
     "require": {
         "php": "^8.4",
+        "barryvdh/laravel-dompdf": "^3.1",
         "filament/filament": "^5.10",
         "laravel/fortify": "^1.37.2",
         "laravel/framework": "^13.17",
         "laravel/tinker": "^3.0",
         "livewire/blaze": "^1.0",
         "livewire/flux": "^2.13.1",
-        "livewire/livewire": "^4.1"
+        "livewire/livewire": "^4.1",
+        "symfony/brevo-mailer": "^8.1",
+        "symfony/http-client": "^8.1"
     },
     "require-dev": {
         "fakerphp/faker": "^1.24",

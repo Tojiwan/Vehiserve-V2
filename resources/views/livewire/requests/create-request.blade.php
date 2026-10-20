@@ -25,7 +25,7 @@
             @endforeach
             <flux:error name="submission" />
         </div>
-        <flux:text>Supporting memos and downloads will be available in the document phase.</flux:text>
+        <flux:text>You can attach endorsements or supporting files to the request after submitting, and download its PDFs from the request page.</flux:text>
         <flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="submit">Submit request</flux:button>
     </form>
 </section>

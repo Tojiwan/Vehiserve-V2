@@ -35,7 +35,7 @@ class SubmitTripRequest
         }
         RateLimiter::hit($key, 60);
 
-        return DB::transaction(function () use ($actor, $data): TripRequest {
+        $trip = DB::transaction(function () use ($actor, $data): TripRequest {
             $trip = new TripRequest([
                 'request_number' => 'VR-'.Str::ulid(),
                 'office' => trim($data['office']),
@@ -58,5 +58,9 @@ class SubmitTripRequest
 
             return $trip;
         });
+
+        DB::afterCommit(fn () => app(NotifyTripChange::class)->handle($trip, $actor, 'submitted'));
+
+        return $trip;
     }
 }

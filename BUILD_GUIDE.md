@@ -1,7 +1,7 @@
 # VEHISERVE v2 — Build Guide
 
 Created: October 19, 2026  
-Status: Phase 3 implemented and locally verified; Phase 4 is next. Hosted storage remains deferred to Phase 4.
+Status: Phase 4 implemented and locally verified; Brevo inbox delivery and the real password-reset/login flow confirmed October 20. Phase 5 is next. Hosted storage selection and Render delivery verification remain Phase 6 work.
 
 ## 1. Read this first
 
@@ -84,8 +84,9 @@ or workflow implementation to copy. No legacy data or credentials were copied.
 | Node.js | Installed 24.22.0 via Herd's nvm; `.nvmrc` selects it; other shells may still default to Node 26 |
 | npm / Vite | npm 11.19.1 bundled with Node 24; Vite 8.3.4; production build verified |
 | Tests | Pest 4.7.8; PostgreSQL-backed feature tests |
-| PDF package | barryvdh/laravel-dompdf 3.1.2 supports Laravel 13; install during document phase |
-| Object-storage provider | Owner deferred selection to Phase 4; private local storage during development |
+| PDF package | barryvdh/laravel-dompdf 3.1.2, installed in Phase 4 |
+| Brevo mail | symfony/brevo-mailer 8.1.0 with symfony/http-client 8.1.9 for the HTTPS API transport, installed in Phase 4 |
+| Object-storage provider | Owner deferred selection to Phase 6; Phase 4 uses the private local `attachments` disk |
 
 The legacy app used PHP 8.2 because of its old lock file. Do not carry that lock
 file or PHP restriction into this new project.
@@ -156,8 +157,10 @@ not an approved final choice; verify its current terms before signing up.
 Phase 0 clarification: this storage is for uploaded files, not PostgreSQL records.
 Private local storage works during development; external storage is required before
 hosted attachments can persist across Render restarts. On October 19, 2026, the
-owner explicitly deferred provider selection to Phase 4. Use private local storage
-until then; do not create a billing account or treat hosted uploads as ready.
+owner explicitly deferred provider selection; Phase 4 recorded the further
+deferral to Phase 6 and implemented the private local `attachments` disk
+(`storage/app/private/attachments`) instead. Do not create a billing account or
+treat hosted uploads as ready; Phase 6 switches the disk driver.
 R2's reviewed Standard allowance is 10 GB-month storage, 1 million Class A and
 10 million Class B operations monthly, with free direct egress. Usage above these
 allowances is billed. Its setup requires an R2 subscription checkout; confirm the
@@ -186,9 +189,12 @@ Owner confirmation, October 19, 2026: approved the default workflow, seven roles
 rejection/cancellation/availability rules, restricted demo access, and Render + Neon
 with the documented cold starts. Branding direction: **retain the DHVSU logo;
 typography and icons may change**. Keep the portfolio-recreation description;
-logo publication permissions have not been verified. Hosted file storage remains
-undecided and explicitly deferred to Phase 4. Proposed file types/limits still
-need confirmation before implementing attachments.
+logo publication permissions have not been verified. Phase 4 confirmations:
+attachments accept PDF, JPEG, or PNG up to 5 MB each, at most 3 per request,
+with a fixed category list (Endorsement letter, Supporting document, Other);
+hosted object storage stays deferred to Phase 6 with the private local
+`attachments` disk in development. Brevo API authentication, active sender status,
+and local-to-Gmail inbox delivery were confirmed on October 20, 2026.
 
 1. **Roles:** retain User, Admin, Motor Pool Staff, Dean, Vice President, SUC
    President, and Super Admin, with the permissions in section 6.
@@ -202,8 +208,9 @@ need confirmation before implementing attachments.
    reservations happen only when scheduling, with a fresh conflict check.
 6. **Authentication:** portfolio access uses role-specific demo entry points;
    unrestricted public registration is not needed for the first release.
-7. **Files:** approve the external provider and upload types/size limits before
-   implementing storage. Initial proposed types are PDF, JPEG, and PNG.
+7. **Files:** approved upload types are PDF, JPEG, and PNG, up to 5 MB each and
+   at most 3 attachments per request, with fixed categories. Hosted provider
+   selection is deferred to Phase 6; the local `attachments` disk stays private.
 8. **Branding:** retain the DHVSU logo as requested, with refreshed typography and
    icons. Present the app as an independent portfolio recreation, not an official
    university service. Verify permission for public use before publication.
@@ -368,6 +375,16 @@ Public demo activity uses in-app notifications and does not send messages to
 arbitrary recipients. Test real email only through controlled non-demo accounts
 and inboxes owned by the project owner.
 
+Implemented in Phase 4: `config/mail.php` defines a `brevo` mailer, and
+`AppServiceProvider` binds it to symfony/brevo-mailer's HTTPS API transport with
+a 10-second bounded timeout (`BREVO_TIMEOUT`). Every notification always writes
+the in-app database channel and adds mail only for non-demo accounts, so public
+demo activity cannot email arbitrary recipients. A failed send is logged, never
+rolls back the committed decision, and is not reported as delivered. A real test
+sent through Laravel's Brevo mailer reached the owner's designated Gmail Inbox
+on October 20, confirmed by screenshot. The owner subsequently confirmed the real
+password-reset and login flow. Delivery from Render remains unverified.
+
 ## 10. Demo data and portfolio safeguards
 
 - Seed all seven roles with documented local demo credentials.
@@ -411,6 +428,14 @@ schedule list before adding calendar UI. Verify concurrent conflict prevention.
 
 Choose storage, build private upload/download flows and PDFs, then in-app
 notifications and controlled Brevo API email. Test failure paths and authorization.
+
+Implemented: a private `attachments` disk, requester-only uploads (PDF/JPEG/PNG,
+5 MB, 3 per request, fixed categories, ULID paths), signed 15-minute download
+links that re-check the view policy, uploader-only deletion until a request is
+terminal, dompdf vehicle-request and travel-order documents built from the shared
+trip record with recorded approver names and times and demo sample labeling, a
+Filament database-notification bell plus a portal notification list, and the
+Brevo HTTPS transport with bounded timeout and logged failures.
 
 ### Phase 5 — Portfolio experience
 
@@ -465,7 +490,7 @@ The portfolio release is ready when:
 
 ## 14. Handoff status
 
-Phases 1–3 are implemented and locally verified. Open `http://vehiserve-v2.test` with
+Phases 1–4 are implemented and locally verified. Open `http://vehiserve-v2.test` with
 Herd and local PostgreSQL running. See README.md for startup, installation, and
 all seven fictional demo logins. The owner handles Git; no agent commit was made.
 
@@ -492,6 +517,21 @@ deliberately not exposed; cancel and resubmit is the supported path.
 The retained DHVSU logo was the only copied legacy asset; no legacy data or secrets
 were copied. Fictional walkthrough requests and bookings remain as local examples at
 every stage (ready to schedule, scheduled, completed, cancelled).
+Phase 4 adds private request attachments and documents. Uploads are requester-only
+(PDF/JPEG/PNG, 5 MB each, 3 per request, fixed categories) and stored on the private
+`attachments` disk under server-generated ULID paths; downloads use 15-minute signed
+links that still re-check the view policy on every request. Only the uploader can
+delete, and only while the request is not terminal; staff are read-only. Request
+pages generate vehicle-request and travel-order PDFs from the shared trip record
+with recorded approver names and times, demo documents labeled as samples, and the
+renderer restricted to local resources with remote fetching disabled. Workflow
+decisions send in-app notifications after commit: the next reviewer, the requester
+(at all-approvals-complete, scheduled, completed, rejected, cancelled), and motor
+pool staff when their queue work changes. Demo accounts receive in-app only, and
+payloads carry Filament's database format so the panel bell lists them; the
+notifications `data` column became `json` through one additive migration so the
+bell's `data->>'format'` filter works on PostgreSQL. Mail failures are logged and
+never roll back a committed decision or claim delivery.
 
 Local PostgreSQL binaries and data are under `%LOCALAPPDATA%\Vehiserve`, outside the
 repository. Development uses `vehiserve`; tests use `vehiserve_test`, with a separate
@@ -499,12 +539,36 @@ non-superuser application role. PostgreSQL is not a Windows service and must be
 started after reboot using the README commands. `.env` contains generated local
 credentials and is ignored; `.env.example` contains no secret values.
 
-Verification: 141 tests / 813 assertions passed, including real two-process
-PostgreSQL tests for stale decisions and vehicle/driver booking conflicts. Pint, PHPStan, and
-the production Vite build passed. Desktop/mobile browser checks covered submission,
-all five approval steps, Filament queues, the schedule modal, the calendar/list,
-completion, requester assignment views, and cancellation without JS errors or
-horizontal page overflow. Composer validation and package audits passed in Phase 1;
-Phases 2–3 added no dependencies. CI configuration is written; GitHub execution,
-hosted services, inbox delivery, and public logo permission are not verified.
-Next: Phase 4 files, documents, and notifications.
+Verification: 170 tests / 939 assertions passed, including real two-process
+PostgreSQL tests for stale decisions and vehicle/driver booking conflicts, plus
+Phase 4 suites for upload validation, signed-link authorization, PDF rendering and
+labeling, notification-recipient selection, and a broken-mailer test that proves a
+committed decision and its in-app row survive a failed email. Pint, PHPStan, and
+the production Vite build passed again during the Phase 4 review. Composer validation
+and both dependency audits passed with no reported vulnerabilities. Desktop/mobile browser
+checks covered submission, all five approval steps, Filament queues, the schedule
+modal, the calendar/list, completion, requester assignment views, and cancellation
+without JS errors or horizontal page overflow; a Phase 4 browser pass covered the
+dashboard notification list and mark-as-read, both generated PDFs, attachment
+upload, signed download, and deletion, the staff read-only view, and the Filament
+notification bell. Composer validation and package
+audits passed in Phase 1; Phases 2–3 added no dependencies, and Phase 4 added
+laravel-dompdf, symfony/brevo-mailer, and symfony/http-client. CI configuration is
+written; GitHub execution, hosted services, and public logo
+permission are not verified.
+Next: Phase 5 portfolio UX and demo experience.
+
+Phase 4 review (October 20): uploads/deletions now lock and re-read the request,
+notifications wait for the outermost transaction commit, and transition messages
+use that decision's state/reason rather than querying a possibly newer event.
+Downloads re-check actual MIME and size; Filament notification bodies escape
+requester text. Travel orders no longer claim travel is authorized before approval.
+Mark-all-read uses one database update, and Brevo has an overall request deadline.
+PDF temporary font files use writable private application storage. Browser checks
+passed on desktop/mobile, including an exact 5 MB upload/download/delete cycle.
+Configure PHP's upload limits and writable upload temp directory as documented in
+README.md; the local CLI defaults were insufficient. Public-host auth links,
+and hosted object storage remain unverified. The owner subsequently confirmed
+the real password-reset email, password change, and login on October 20.
+Brevo inbox delivery was subsequently confirmed by the owner on October 20:
+Laravel's HTTPS mailer sent the test and Gmail displayed it in the Inbox.

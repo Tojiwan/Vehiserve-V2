@@ -65,6 +65,13 @@ return [
             'transport' => 'resend',
         ],
 
+        // Brevo transactional HTTPS API; see AppServiceProvider for the transport.
+        'brevo' => [
+            'transport' => 'brevo',
+            'key' => env('BREVO_API_KEY'),
+            'timeout' => (float) env('BREVO_TIMEOUT', 10),
+        ],
+
         'sendmail' => [
             'transport' => 'sendmail',
             'path' => env('MAIL_SENDMAIL_PATH', '/usr/sbin/sendmail -bs -i'),

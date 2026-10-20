@@ -137,25 +137,59 @@ requester assignment views, fleet pages, and the mobile calendar without JS erro
 ## Phase 4 — Files, documents, and notifications
 
 - [ ] Select private object-storage provider after reviewing free limits and billing requirements with the owner.
-- [ ] Confirm permitted upload types and size limits.
+- [x] Confirm permitted upload types and size limits.
 - [ ] Configure approved private object storage and local development storage.
-- [ ] Implement file-type/size validation and opaque storage paths.
-- [ ] Implement authorized uploads and short-lived private downloads.
-- [ ] Add attachment ownership and document categories to request screens.
-- [ ] Generate vehicle-request and travel-order PDFs from the shared trip record.
-- [ ] Include approver names/timestamps and demo-document labeling.
-- [ ] Block arbitrary remote resources in PDF generation.
-- [ ] Add in-app notifications for meaningful workflow changes.
-- [ ] Obtain a new Brevo API key and verified sender in provider settings.
-- [ ] Implement Brevo HTTPS delivery with timeout/error handling.
-- [ ] Wire framework password-reset/verification links to the public APP_URL.
-- [ ] Keep public demo actions from sending email to arbitrary recipients.
-- [ ] Test unauthorized file access, disallowed types, and oversized uploads.
-- [ ] Test generated PDFs and notification-recipient selection.
-- [ ] Test mail failures without false success or lost approval decisions.
-- [ ] Verify real inbox delivery and password reset with an owner-controlled account.
+- [x] Implement file-type/size validation and opaque storage paths.
+- [x] Implement authorized uploads and short-lived private downloads.
+- [x] Add attachment ownership and document categories to request screens.
+- [x] Generate vehicle-request and travel-order PDFs from the shared trip record.
+- [x] Include approver names/timestamps and demo-document labeling.
+- [x] Block arbitrary remote resources in PDF generation.
+- [x] Add in-app notifications for meaningful workflow changes.
+- [x] Obtain a new Brevo API key and verified sender in provider settings.
+- [x] Implement Brevo HTTPS delivery with timeout/error handling.
+- [x] Wire framework password-reset/verification links to the public APP_URL.
+- [x] Keep public demo actions from sending email to arbitrary recipients.
+- [x] Test unauthorized file access, disallowed types, and oversized uploads.
+- [x] Test generated PDFs and notification-recipient selection.
+- [x] Test mail failures without false success or lost approval decisions.
+- [x] Verify real inbox delivery to an owner-controlled recipient.
+- [x] Verify the real password-reset email and reset flow with an owner-controlled non-demo account.
 
-Evidence / blockers: Pending. Local legacy SMTP credentials are not v2 API credentials.
+Evidence: `composer ci:check` passed (Pint, PHPStan, 161 tests / 910 assertions).
+Owner decisions, October 19, 2026: uploads are PDF/JPEG/PNG only, 5 MB per file,
+at most 3 per request, in fixed categories (Endorsement letter, Supporting
+document, Other); requester-only uploads until a request is terminal, uploader-only
+deletion, staff read-only. `StoreAttachment` revalidates type, size, ownership, and
+the cap server-side and writes ULID paths under `requests/{request_number}/`; the
+client filename never touches the disk layout. Downloads use 15-minute signed
+links through `AttachmentDownloadController`, which re-checks the view policy on
+every request: a valid signature without access returns 403, and a mismatched
+trip/attachment pairing returns 404. `GenerateTripDocument` renders both PDFs from
+the shared trip record with recorded approver names and Manila timestamps, labels
+demo-owned requests as samples, keeps a `public/` chroot, and disables remote
+resources. Notifications are dispatched after the decision transaction commits,
+exclude the actor, target staff whose demo status matches the requester (so public
+demo activity cannot email real accounts), and add the mail channel only for
+non-demo accounts; payloads carry Filament's database format so the staff bell
+lists them, and the dashboard shows a Recent updates list with mark-as-read. One
+additive migration converts `notifications.data` to json so the bell's
+`data->>'format'` filter works on PostgreSQL. The broken-SMTP test proves a failed
+email cannot roll back a committed decision or lose its in-app row. A
+headless-browser pass on the development database verified the dashboard
+notification list and mark-as-read, both PDF downloads, attachment upload, signed
+download, and deletion, the staff read-only view, and the Filament bell. Reset and
+verification links are generated as absolute URLs for the app host and honor
+`APP_URL`; `Mail::extend('brevo')` builds symfony/brevo-mailer's HTTPS API
+transport with a 10-second timeout. Development still uses the private local
+`attachments` disk (`storage/app/private/attachments`); hosted storage selection is
+deferred to Phase 6. On October 20, the Brevo API accepted the configured key and
+reported the sender active. A test sent through Laravel's `brevo` mailer reached
+the owner's designated Gmail Inbox, confirmed by the owner and screenshot.
+The owner also received the real password-reset email, completed the reset, and
+confirmed login worked after reopening the login page following a 419 response.
+The old password no longer matched and the reset token was consumed. Delivery
+from Render remains unverified.
 
 ## Phase 5 — Portfolio UX and demo experience
 
@@ -350,6 +384,34 @@ Only start these if requested after the core release:
   a second concurrency scenario with different vehicles sharing one driver.
 - Full local gate passed: Pint, PHPStan, 141 tests / 813 assertions. Browser and
   asset-build checks were not repeated for these PHP-only changes.
+
+### October 19, 2026 — Phase 4 files, documents, and notifications implemented
+
+- Owner decisions recorded: PDF/JPEG/PNG, 5 MB, 3 per request, fixed categories;
+  hosted storage deferred to Phase 6; Brevo key still pending.
+- Added the private `attachments` disk, `Attachment`/`AttachmentCategory`,
+  `StoreAttachment`/`DeleteAttachment` actions, and requester-only upload policy
+  with server-generated ULID paths; staff are read-only.
+- Added 15-minute signed attachment downloads with a per-download policy re-check,
+  plus dompdf vehicle-request and travel-order PDFs from the shared trip record
+  with approver names/timestamps, demo sample labels, and remote fetching disabled.
+- Added post-commit notifications from the four shared actions, the Filament
+  database-notification bell, and the portal Recent updates list with mark-as-read;
+  mail goes only to non-demo accounts, and failures are logged without rolling
+  back or claiming delivery.
+- Added one additive migration converting `notifications.data` to json for
+  Filament's bell query.
+- Wired symfony/brevo-mailer's HTTPS API transport with a 10-second timeout;
+  real sends still need the owner's key and verified sender.
+- Installed laravel-dompdf 3.1.2, symfony/brevo-mailer 8.1.0, symfony/http-client
+  8.1.9. Gate passed: Pint, PHPStan, 161 tests / 910 assertions. A headless-browser
+  pass covered the dashboard notification list and mark-as-read, both PDFs,
+  attachment upload/signed download/deletion, the staff read-only view, and the
+  Filament bell on the development database (Phase 4 assets unchanged, so the
+  earlier production Vite build still applies).
+- Unticked/blocked: hosted storage provider (Phase 6), Brevo key, and real inbox
+  verification. No agent commit made.
+- Next: Phase 5 portfolio UX and demo experience.
 
 ## Release record
 
